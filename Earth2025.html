@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earth 2025 - USDC</title>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2, h3, h4 {
+    text-align: center;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+button.secondary:hover {
+    background: #545b62;
+}
+
+#info {
+    white-space: pre-wrap;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    height: 200px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    margin-bottom: 10px;
+}
+
+#vitals-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#expected-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Leaderboard styles */
+#leaderboard-screen {
+    text-align: center;
+}
+
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+#leaderboard-table th,
+#leaderboard-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+#leaderboard-table th {
+    background: #f0f4f8;
+    font-weight: 600;
+    color: #555;
+}
+
+#leaderboard-table tr:hover td {
+    background: #f9f9f9;
+}
+
+.rank-1 td { color: #b8860b; font-weight: bold; }
+.rank-2 td { color: #666; font-weight: bold; }
+.rank-3 td { color: #8B4513; font-weight: bold; }
+
+.difficulty-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.diff-easy   { background: #d4edda; color: #155724; }
+.diff-normal { background: #fff3cd; color: #856404; }
+.diff-hard   { background: #f8d7da; color: #721c24; }
+
+/* Score submission popup */
+#score-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+#score-modal.hidden {
+    display: none;
+}
+
+#score-modal-box {
+    background: white;
+    border-radius: 10px;
+    padding: 30px 40px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+#score-modal-box h3 {
+    margin-top: 0;
+}
+
+#score-modal-box p {
+    font-size: 1.1em;
+    margin: 10px 0 20px;
+}
+
+#score-modal-box .big-score {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+#modal-rank {
+    font-size: 1.1em;
+    color: #555;
+    margin: 10px 0;
+    min-height: 1.5em;
+}
+
+#leaderboard-empty {
+    color: #888;
+    font-style: italic;
+    margin: 20px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Intro Screen -->
+<div id="intro-screen">
+    <h2>Welcome to Earth 2025</h2>
+    <p>Hello, Worker Number 472, welcome to Earth. Recently, the Earth has experienced a tragic fallout that caused millions of people to turn into radioactive 'doppelgangers' with a contagious illness that could kill the rest of the population. Our job at the US Agency of Doppelganger Containment or USDC, is to help survivors and identify doppelgangers and treat them in the containment unit. You have been given a manual that you can use to identify doppelgangers that you may access any time. You start directly after the briefing.</p>
+    <label>Name: <input type="text" id="player-name"></label><br><br>
+    <label>Difficulty:
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+        </select>
+    </label><br><br>
+    <button id="start-game">Start</button>
+    <button class="secondary" id="view-leaderboard-btn">Leaderboard</button>
+</div>
+
+<!-- Manual Screen -->
+<div id="manual-screen" class="hidden">
+    <h3>USDC Manual</h3>
+    <p id="manual-text">Normal ranges: Temperature 96–100°F, BP &lt; 120, Heart Rate 60–100 bpm, Breathing 12–20.</p>
+    <button id="proceed-duty">Proceed to Duty</button>
+</div>
+
+<div id="manual-popup" class="hidden">
+    <h3>USDC Manual</h3>
+    <p id="manual-text-popup">Normal ranges: Temperature 96–100°F, BP &lt; 120, Heart Rate 60–100 bpm, Breathing 12–20.</p>
+    <button id="close-manual">Close Manual</button>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="hidden">
+    <div>
+        <span id="status">Strikes: 0/3 | Day: 1</span>
+    </div>
+    <h4>Expected Patients</h4>
+    <ul id="expected-list"></ul>
+    <div id="info"></div>
+    <div id="vitals-buttons"></div>
+    <div>
+        <button id="btn-quarantine" disabled>Send to Quarantine</button>
+        <button id="btn-normal" disabled>Send to Normal Reserve</button>
+        <button id="btn-next">Next Patient</button>
+        <button id="view-manual">View Manual</button>
+        <button id="end-shift">End Shift</button>
+    </div>
+</div>
+
+<!-- Leaderboard Screen -->
+<div id="leaderboard-screen" class="hidden">
+    <h2>Global Leaderboard</h2>
+    <p id="leaderboard-empty" class="hidden">No scores yet — be the first!</p>
+    <table id="leaderboard-table" class="hidden">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Difficulty</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+    </table>
+    <button class="secondary" id="back-from-leaderboard">Back</button>
+</div>
+
+</div>
+
+<!-- Score Submission Modal -->
+<div id="score-modal" class="hidden">
+    <div id="score-modal-box">
+        <h3 id="modal-title">Game Over!</h3>
+        <p>Your final score:</p>
+        <div class="big-score" id="modal-score">0</div>
+        <div id="modal-rank"></div>
+        <div style="margin-top: 20px;">
+            <button id="modal-leaderboard">View Leaderboard</button>
+            <button class="secondary" id="modal-play-again">Play Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// -----------------
+// Data
+// -----------------
+const firstNames = ["John", "Sarah", "Alex", "Emily", "Marcus", "Lila", "Owen", "Sophia", "Daniel", "Maya"];
+const lastNames = ["Carter", "Nguyen", "Patel", "Garcia", "Smith", "Khan", "Ivanov", "Silva", "Brown", "Lee"];
+const manualText = "Normal ranges: Temperature 96–100°F, BP < 120, Heart Rate 60–100 bpm, Breathing 12–20.";
+
+let doppelChance = 0.5, tempRange = [97, 105], hrLow = [50, 59], hrHigh = [105, 120];
+let currentDifficulty = "normal";
+let currentPlayerName = "";
+
+let doppelDialogue = [
+    "The air tastes like copper today… doesn't it?",
+    "My skin feels loose, but I am fine. Normal.",
+    "I had a dream my bones melted… but I woke up fine.",
+    "I am healthy. Very healthy. Perfectly human.",
+    "Your eyes are beautiful. I would like to wear them."
+];
+const normalDialogue = [
+    "I'm so glad to be alive… thank you for keeping us safe.",
+    "It's been so hard out there. Please, let me in.",
+    "I don't feel well, but I'm human, I swear.",
+    "Please, my family is inside. I need to see them.",
+    "I've followed every rule. Don't let me die out here."
+];
+
+let expectedPatients = [], patientData = null;
+let score = 0, strikes = 0, maxStrikes = 3, day = 1, patientNumber = 1;
+let vitalsChecked = {};
+let gameEnded = false;
+
+// -----------------
+// DOM references
+// -----------------
+const introScreen       = document.getElementById("intro-screen");
+const manualScreen      = document.getElementById("manual-screen");
+const gameScreen        = document.getElementById("game-screen");
+const leaderboardScreen = document.getElementById("leaderboard-screen");
+const infoDiv           = document.getElementById("info");
+const expectedList      = document.getElementById("expected-list");
+const statusSpan        = document.getElementById("status");
+const vitalsButtonsDiv  = document.getElementById("vitals-buttons");
+const btnQuarantine     = document.getElementById("btn-quarantine");
+const btnNormal         = document.getElementById("btn-normal");
+const btnNext           = document.getElementById("btn-next");
+const manualPopup       = document.getElementById("manual-popup");
+const scoreModal        = document.getElementById("score-modal");
+
+// Manual popup
+document.getElementById("view-manual").addEventListener("click", () => {
+    manualPopup.classList.remove("hidden");
+});
+document.getElementById("close-manual").addEventListener("click", () => {
+    manualPopup.classList.add("hidden");
+});
+
+// End shift
+document.getElementById("end-shift").addEventListener("click", () => {
+    if (gameEnded) return;
+    endGame("Shift Ended!");
+});
+
+// -----------------
+// Leaderboard
+// -----------------
+document.getElementById("view-leaderboard-btn").addEventListener("click", () => {
+    showLeaderboard(() => {
+        leaderboardScreen.classList.remove("hidden");
+        introScreen.classList.add("hidden");
+    });
+});
+
+document.getElementById("back-from-leaderboard").addEventListener("click", () => {
+    leaderboardScreen.classList.add("hidden");
+    introScreen.classList.remove("hidden");
+});
+
+document.getElementById("modal-leaderboard").addEventListener("click", () => {
+    scoreModal.classList.add("hidden");
+    showLeaderboard(() => {
+        gameScreen.classList.add("hidden");
+        leaderboardScreen.classList.remove("hidden");
+        document.getElementById("back-from-leaderboard").addEventListener("click", function once() {
+            leaderboardScreen.classList.add("hidden");
+            introScreen.classList.remove("hidden");
+            this.removeEventListener("click", once);
+        }, { once: true });
+    });
+});
+
+document.getElementById("modal-play-again").addEventListener("click", () => {
+    scoreModal.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    introScreen.classList.remove("hidden");
+});
+
+async function showLeaderboard(callback) {
+    const tbody = document.getElementById("leaderboard-body");
+    const table = document.getElementById("leaderboard-table");
+    const empty = document.getElementById("leaderboard-empty");
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">Loading…</td></tr>';
+    table.classList.remove("hidden");
+    empty.classList.add("hidden");
+    if (callback) callback();
+    try {
+        const res = await fetch("/api/scores");
+        const scores = await res.json();
+        tbody.innerHTML = "";
+        if (scores.length === 0) {
+            table.classList.add("hidden");
+            empty.classList.remove("hidden");
+            return;
+        }
+        scores.forEach((entry, i) => {
+            const tr = document.createElement("tr");
+            if (i < 3) tr.classList.add(`rank-${i + 1}`);
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+            tr.innerHTML = `
+                <td>${medal}</td>
+                <td>${escapeHtml(entry.name)}</td>
+                <td>${entry.score}</td>
+                <td><span class="difficulty-badge diff-${entry.difficulty}">${entry.difficulty}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        table.classList.remove("hidden");
+        empty.classList.add("hidden");
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#c00;">Could not load scores.</td></tr>';
+    }
+}
+
+async function submitScore() {
+    try {
+        const res = await fetch("/api/scores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: currentPlayerName, score, difficulty: currentDifficulty })
+        });
+        const data = await res.json();
+        return data.rank;
+    } catch (e) {
+        return null;
+    }
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// -----------------
+// Game End
+// -----------------
+async function endGame(title) {
+    gameEnded = true;
+    btnQuarantine.disabled = btnNormal.disabled = btnNext.disabled = true;
+    document.getElementById("end-shift").disabled = true;
+
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-score").textContent = score;
+    document.getElementById("modal-rank").textContent = "Submitting score…";
+    scoreModal.classList.remove("hidden");
+
+    const rank = await submitScore();
+    if (rank !== null) {
+        document.getElementById("modal-rank").textContent = `You ranked #${rank} on the leaderboard!`;
+    } else {
+        document.getElementById("modal-rank").textContent = "";
+    }
+}
+
+// -----------------
+// Helpers
+// -----------------
+function randomInt(min, max) { return Math.floor(Math.random()*(max-min+1)) + min; }
+function generateExpectedList() {
+    let newExpected = [];
+    let num = randomInt(3,6);
+    for(let i=0;i<num;i++){
+        let fullName = firstNames[randomInt(0,firstNames.length-1)]+" "+lastNames[randomInt(0,lastNames.length-1)];
+        let patientId = String.fromCharCode(65+randomInt(0,3))+randomInt(100,999);
+        newExpected.push({name:fullName,id:patientId});
+    }
+    return newExpected;
+}
+function generatePatient() {
+    let impersonate = Math.random() < 0.3 && expectedPatients.length>0;
+    let fullName, patientId, status, isExpected;
+    if(impersonate){
+        let chosen = expectedPatients[randomInt(0,expectedPatients.length-1)];
+        fullName=chosen.name; patientId=chosen.id; status="Doppelganger"; isExpected=true;
+    } else {
+        fullName = firstNames[randomInt(0,firstNames.length-1)]+" "+lastNames[randomInt(0,lastNames.length-1)];
+        patientId = String.fromCharCode(65+randomInt(0,3))+randomInt(100,999);
+        status = Math.random()<doppelChance ? "Doppelganger" : "Normal";
+        isExpected = expectedPatients.some(p=>p.name===fullName && p.id===patientId);
+    }
+    let vitals, dialogue;
+    if(status==="Normal"){
+        vitals = {"Heart Rate":randomInt(60,100),"Blood Pressure":randomInt(100,119),"Respiratory Rate":randomInt(12,20),"Temperature":(Math.random()*4+96).toFixed(1)};
+        dialogue = normalDialogue[randomInt(0,normalDialogue.length-1)];
+    } else {
+        vitals = {"Heart Rate":randomInt(hrLow[0],hrLow[1]),"Blood Pressure":randomInt(70,200),"Respiratory Rate":randomInt(6,40),"Temperature":(Math.random()*(tempRange[1]-tempRange[0])+tempRange[0]).toFixed(1)};
+        dialogue = doppelDialogue[randomInt(0,doppelDialogue.length-1)];
+    }
+    return {name:fullName,id:patientId,status,vitals,dialogue,isExpected};
+}
+
+// -----------------
+// Game Flow
+// -----------------
+document.getElementById("start-game").addEventListener("click", () => {
+    let playerName = document.getElementById("player-name").value.trim();
+    if(!playerName){alert("Enter your name"); return;}
+    currentPlayerName = playerName;
+    currentDifficulty = document.getElementById("difficulty").value;
+    switch(currentDifficulty){
+        case "easy":   doppelChance=0.3; hrLow=[55,59]; hrHigh=[101,110]; tempRange=[97,103]; break;
+        case "normal": doppelChance=0.5; hrLow=[50,59]; hrHigh=[105,120]; tempRange=[97,105]; break;
+        case "hard":   doppelChance=0.7; hrLow=[45,55]; hrHigh=[110,130]; tempRange=[98,107]; break;
+    }
+    introScreen.classList.add("hidden");
+    manualScreen.classList.remove("hidden");
+});
+
+document.getElementById("proceed-duty").addEventListener("click",()=>{
+    manualScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    startDay();
+});
+
+function startDay(){
+    score=0; strikes=0; day=1; patientNumber=1; gameEnded=false;
+    document.getElementById("end-shift").disabled = false;
+    expectedPatients = generateExpectedList();
+    nextPatient();
+    updateExpectedList();
+    updateStatus();
+}
+
+function updateExpectedList(){
+    expectedList.innerHTML="";
+    expectedPatients.forEach(p=>{
+        let li=document.createElement("li");
+        li.textContent=`Name: ${p.name}, ID: ${p.id}`;
+        expectedList.appendChild(li);
+    });
+}
+
+function updateStatus(){
+    statusSpan.textContent = `Day: ${day}`;
+}
+
+function displayPatient(){
+    let pd = patientData;
+    infoDiv.textContent=`Patient Name: ${pd.name}\nPatient ID: ${pd.id}\nPatient says: "${pd.dialogue}"\n\n--- VITALS ---\n`;
+}
+
+function nextPatient(){
+    if(strikes>=maxStrikes){
+        infoDiv.textContent=`Game Over!\nYour final score is: ${score}\nStrikes: ${strikes}/${maxStrikes}`;
+        endGame("Game Over!");
+        return;
+    }
+    if(expectedPatients.length===0){day++; expectedPatients=generateExpectedList(); updateExpectedList(); patientNumber=1;}
+    patientData=generatePatient();
+    vitalsChecked={"Heart Rate":false,"Blood Pressure":false,"Respiratory Rate":false,"Temperature":false};
+    displayPatient();
+    updateStatus();
+    setupVitalsButtons();
+    btnQuarantine.disabled=btnNormal.disabled=true;
+}
+
+function setupVitalsButtons(){
+    vitalsButtonsDiv.innerHTML="";
+    Object.keys(patientData.vitals).forEach(v=>{
+        let btn=document.createElement("button");
+        btn.textContent=`Check ${v}`;
+        btn.addEventListener("click",()=>{
+            infoDiv.textContent+=`${v}: ${patientData.vitals[v]}\n`;
+            vitalsChecked[v]=true;
+            btn.disabled=true;
+            if(Object.values(vitalsChecked).every(Boolean)){ btnQuarantine.disabled=btnNormal.disabled=false; }
+        });
+        vitalsButtonsDiv.appendChild(btn);
+    });
+}
+
+btnQuarantine.addEventListener("click",()=>{
+    if(gameEnded) return;
+    if(patientData.status==="Doppelganger"){score++; infoDiv.textContent+="\n✅ Correct! Doppelganger detected.";}
+    else{strikes++; infoDiv.textContent+="\n❌ Wrong! That was a normal patient.";}
+    patientNumber++;
+    nextPatient();
+});
+
+btnNormal.addEventListener("click",()=>{
+    if(gameEnded) return;
+    if(patientData.status==="Doppelganger"){strikes++; infoDiv.textContent+="\n❌ Wrong! Doppelganger got through.";}
+    else if(patientData.isExpected){score++; expectedPatients = expectedPatients.filter(p=>!(p.name===patientData.name && p.id===patientData.id)); updateExpectedList(); infoDiv.textContent+="\n✅ Correct! Normal patient processed.";}
+    patientNumber++;
+    nextPatient();
+});
+
+btnNext.addEventListener("click",()=>nextPatient());
+
+// Keyboard shortcuts
+document.addEventListener("keydown",(e)=>{
+    if(gameScreen.classList.contains("hidden")) return;
+    if(e.key==="1") vitalsButtonsDiv.children[0]?.click();
+    if(e.key==="2") vitalsButtonsDiv.children[1]?.click();
+    if(e.key==="3") vitalsButtonsDiv.children[2]?.click();
+    if(e.key==="4") vitalsButtonsDiv.children[3]?.click();
+    if(e.key==="q") btnQuarantine.click();
+    if(e.key==="n") btnNormal.click();
+});
+</script>
+</body>
+</html>
