@@ -363,7 +363,7 @@ async function showLeaderboard(callback) {
     empty.classList.add("hidden");
     if (callback) callback();
     try {
-        const res = await fetch("/api/scores");
+        const res = await fetch("https://earth-2025leaderboard.onrender.com/api/scores");
         const scores = await res.json();
         tbody.innerHTML = "";
         if (scores.length === 0) {
@@ -392,7 +392,7 @@ async function showLeaderboard(callback) {
 
 async function submitScore() {
     try {
-        const res = await fetch("/api/scores", {
+        const res = await fetch("https://earth-2025leaderboard.onrender.com/api/scores", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: currentPlayerName, score, difficulty: currentDifficulty })
